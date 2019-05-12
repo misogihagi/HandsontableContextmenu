@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>コンテキストメニュー例</title>
+    <link rel="stylesheet" type="text/css" href='handsontable.min.css'>
+    <script src='handsontable.min.js'></script>
+    <script src='ja-JP.js'></script>
+</head>
+<body>
+    <div id="handsontable" class="handsontable"></div>
+    <script>
+        var container = document.getElementById('handsontable');
+
+
+        var hot = new Handsontable(container, {
+            data: Handsontable.helper.createSpreadsheetData(20, 20),
+            language: 'ja-JP',
+            contextMenu: {
+                items: new Altcontextmenu
+            },
+            licenseKey: 'non-commercial-and-evaluation'
+        });
+
+        function Altcontextmenu(){
+            var dickey=Handsontable.languages.dictionaryKeys
+            dickey.CONTEXTMENU_ITEMS_TRANSPOSE= "ContextMenu:items.transpose"
+            dickey.CONTEXTMENU_ITEMS_TRANSPOSE_ALERT= "ContextMenu:items.transpose.alert"
+            dickey.CONTEXTMENU_ITEMS_TRANSLATE= "ContextMenu:items.translate"
+            var dic=Handsontable.languages.getLanguageDictionary('en-US')
+            dic['ContextMenu:items.transpose']= "transpose"
+            dic['ContextMenu:items.transpose.alert']= "'transpose' does not support multiple selection"
+            dic['ContextMenu:items.translate']= "language"
+            Handsontable.languages.registerLanguageDictionary('en-US',dic)
+            dic=Handsontable.languages.getLanguageDictionary('ja-JP')
+            dic['ContextMenu:items.transpose']= "転置"
+            dic['ContextMenu:items.transpose.alert']= "「転置」は複数セルを扱えません"
+            dic['ContextMenu:items.translate']= "言語"
+            Handsontable.languages.registerLanguageDictionary('ja-JP',dic)
+            var obj={}
+            for(var i=0;i<Handsontable.plugins.ContextMenu.DEFAULT_ITEMS.length;i++)obj[Handsontable.plugins.ContextMenu.DEFAULT_ITEMS[i]]={}
+            obj['transpose']= {
+                key: 'transpose',
+                name() {
+                                            return this.getTranslatedPhrase(Handsontable.languages.dictionaryKeys.CONTEXTMENU_ITEMS_TRANSPOSE);
+        },
+        callback: function(key, selection, clickEvent) {
+            if(selection[1]){
+                alert(this.getTranslatedPhrase(Handsontable.languages.dictionaryKeys.CONTEXTMENU_ITEMS_TRANSPOSE_ALERT))
+                return
+            }
+            var src=hot.getData(selection[0].start.row,selection[0].start.col,selection[0].end.row,selection[0].end.col)
+            var cols=src.length
+            var rows=src[0].length
+            var tra=new Array(rows)
+            for (var row = 0; row < rows; row++)    {
+                tra[row]=new Array(cols)
+                for (var col = 0; col < cols; col++)        {
+                    tra[row][col] = src[col][row];
+                }
+            }
+            hot.populateFromArray(selection[0].start.row,selection[0].start.col,tra)
+        }
+        },
+        obj["translate"]= { 
+            translate(inst,lang){inst.updateSettings({ language: lang  });},
+        key: 'translate',
+                          name() {
+                              return this.getTranslatedPhrase(Handsontable.languages.dictionaryKeys.CONTEXTMENU_ITEMS_TRANSLATE);
+                          },
+        submenu: {
+                items: [
+                  {
+                      key: 'translate:ja-JP',
+                      name: '日本語',
+                      callback: function(key, selection, clickEvent) {
+                          obj["translate"].translate(this,key.split(':')[1])
+                      }
+                  },
+                  {
+                      key: 'translate:en-US',
+                      name: 'English',
+                      callback: function(key, selection, clickEvent) {
+                          obj["translate"].translate(this,key.split(':')[1])
+                      }
+                  }
+                ]
+        }
+        }
+        return obj
+        }
+    </script>
+</body>
+</html>
